@@ -1,0 +1,428 @@
+# Following are some features that are not yet supported but needed.
+# =====begin=====
+know forall x Z: x > 0 => x >= 1
+know forall x, y, z Z: x >= y, z > 0 => x * z >= y * z
+know forall x, y, z Z: x >= y, z > 0 => x / z >= y / z
+know forall x, y, z Z: x > y, z > 0 => x * z > y * z
+know forall x, y, z Z: x > y, z > 0 => x / z > y / z
+know forall x, y Z: x >= y => not x < y
+know forall x, y Z: x >= y, x != y => x > y
+know forall x, y Z: x > 0, y > 0 => x / y > 0
+know forall x Z: x = 1 => 1 / x = 1
+
+know @mul_cancelation(a, b, c R):
+    a * c = b * c
+    c != 0
+    =>:
+        a = b
+
+know @inequality_multiplication(x, y, z, w Z):
+    x > 0
+    y > 0
+    z > 0
+    w > 0
+    x > y
+    z >= w
+    =>:
+        x * z > y * w
+# ======end======
+
+# Definition of divisible
+exist_prop k Z st divides(d Z, n Z):
+    d != 0
+    <=>:
+        n = k * d
+
+claim:
+    forall a, b Z:
+        a > 0
+        b > 0
+        $divides(a, b)
+        $divides(b, a)
+        =>:
+            a = b
+    prove:
+        have k st $divides(a, b)  # b = k * a
+        have m st $divides(b, a)  # a = m * b
+        b = k * a
+        a = m * b
+        b = k * (m * b)
+        b = (k * m) * b
+        $mul_cancelation(1, k * m, b)
+        1 = k * m
+        a > 0
+        b > 0
+        b / a > 0
+        k = b / a
+        k > 0
+        a / b > 0
+        m = a / b
+        m > 0
+        k >= 1
+        m >= 1
+        claim:
+            k = 1
+            prove_by_contradiction:
+                k != 1
+                k >= 1
+                k > 1
+                m >= 1
+                $inequality_multiplication(k, 1, m, 1)
+                k * m > 1 * 1
+                k * m != 1
+        m * k = 1
+        m * k / k = 1 / k
+        m = 1 / k
+        1 / k = 1
+        m = 1
+        b = 1 * a
+        a = b
+
+claim:
+    forall a Z: a != 0 => $divides(a, a)
+    prove:
+        exist 1 st $divides(a, a)
+
+claim:
+    forall a Z => $divides(1, a)
+    prove:
+        exist a st $divides(1, a)
+
+claim:
+    forall a Z, k Z:
+        a != 0
+        =>:
+            $divides(a, k * a)
+    prove:
+        exist k st $divides(a, k * a)
+
+claim:
+    forall a, k Z:
+        $divides(k, a)
+        =>:
+            a / k $in Z
+    prove:
+        have m st $divides(k, a)
+        a = k * m
+        a / k = m
+        m $in Z
+        a / k $in Z
+
+claim:
+    @divides_is_transitive(a Z, b Z, c Z):
+        $divides(a, b)
+        $divides(b, c)
+        =>:
+            $divides(a, c)
+    prove:
+        have k st $divides(a, b)
+        have m st $divides(b, c)
+        c = m * b
+        c = m * (k * a)
+        c = (m * k) * a
+        exist (m * k) st $divides(a, c)
+
+claim:
+    forall a, b, c Z:
+        $divides(a, b)
+        $divides(b, c)
+        =>:
+            $divides(a, c)
+    prove:
+        $divides_is_transitive(a, b, c)
+
+# Definition of congruence
+prop congruent(a Z, b Z, n Z):
+    n > 0
+    <=>:
+        $divides(n, a - b)
+
+# Reflexivity of congruence
+claim:
+    forall a Z, n Z:
+        n > 0
+        =>:
+            $congruent(a, a, n)
+    prove:
+        exist 0 st $divides(n, a - a)
+
+# Symmetry of congruence
+claim:
+    @congruence_is_symmetric(a, b, n Z):
+        n > 0
+        $congruent(a, b, n)
+        =>:
+            $congruent(b, a, n)
+    prove:
+        have k st $divides(n, a - b)
+        a - b = k * n
+        b - a = - (a - b)
+        b - a = - (k * n)
+        b - a = (-k) * n
+        exist -k st $divides(n, b - a)
+
+# Transitivity of congruence
+claim:
+    @congruence_is_transitive(a, b, c, n Z):
+        n > 0
+        $congruent(a, b, n)
+        $congruent(b, c, n)
+        =>:
+            $congruent(a, c, n)
+    prove:
+        have k1 st $divides(n, a - b)
+        have k2 st $divides(n, b - c)
+        a - b = k1 * n
+        b - c = k2 * n
+        a - c = (a - b) + (b - c)
+        a - c = k1 * n + k2 * n
+        a - c = (k1 + k2) * n
+        exist (k1 + k2) st $divides(n, a - c)
+
+# Addition preserves congruence
+claim:
+    @addition_preserves_congruence(a1, a2, b1, b2, n Z):
+        n > 0
+        $congruent(a1, a2, n)
+        $congruent(b1, b2, n)
+        =>:
+            $congruent(a1 + b1, a2 + b2, n)
+    prove:
+        have k1 st $divides(n, a1 - a2)
+        have k2 st $divides(n, b1 - b2)
+        (a1 + b1) - (a2 + b2) = (a1 - a2) + (b1 - b2)
+        (a1 + b1) - (a2 + b2) = k1 * n + k2 * n
+        (a1 + b1) - (a2 + b2) = (k1 + k2) * n
+        exist (k1 + k2) st $divides(n, (a1 + b1) - (a2 + b2))
+
+# Multiplication preserves congruence
+claim:
+    @multiplication_preserves_congruence(a, b, c, d, n Z):
+        n > 0
+        $congruent(a, b, n)
+        $congruent(c, d, n)
+        =>:
+            $congruent(a * c, b * d, n)
+    prove:
+        have k1 st $divides(n, a - b)
+        have k2 st $divides(n, c - d)
+        a * c - b * d = a * c - a * d + a * d - b * d
+        a * c - b * d = a * (c - d) + d * (a - b)
+        a * c - b * d = a * (k2 * n) + d * (k1 * n)
+        a * c - b * d = (a * k2 + d * k1) * n
+        exist (a * k2 + d * k1) st $divides(n, a * c - b * d)
+
+# Congruence modulo product
+claim:
+    @congruence_modulo_product(a, b, m, n Z):
+        m > 0
+        n > 0
+        $congruent(a, b, m * n)
+        =>:
+            $congruent(a, b, m)
+            $congruent(a, b, n)
+    prove:
+        have k st $divides(m * n, a - b)
+        a - b = k * (m * n)
+        a - b = (k * n) * m
+        exist (k * n) st $divides(m, a - b)
+        a - b = (k * m) * n
+        exist (k * m) st $divides(n, a - b)
+
+fn gcd(a, b Z) Z: # We hereby not supports gcd for negatives
+    a > 0
+    b > 0
+    =>:
+        gcd(a, b) > 0
+        $divides(gcd(a, b), a)
+        $divides(gcd(a, b), b)
+        forall c Z:
+            c > 0
+            $divides(c, a)
+            $divides(c, b)
+            =>:
+                $divides(c, gcd(a, b))
+
+know @is_gcd(a, b, _gcd Z):
+    a > 0
+    b > 0
+    _gcd > 0
+    $divides(_gcd, a)
+    $divides(_gcd, b)
+    forall c Z:
+        c > 0
+        $divides(c, a)
+        $divides(c, b)
+        =>:
+            $divides(c, _gcd)
+    =>:
+        gcd(a, b) = _gcd
+
+fn general_gcd(a, b Z) Z
+know forall a Z => general_gcd(a, 0) = 0
+know forall b Z => general_gcd(0, b) = 0
+know forall a, b Z: a != 0, b != 0 => general_gcd(a, b) = gcd(abs(a), abs(b))
+
+prop coprime(a, b Z):
+    gcd(a, b) = 1
+
+claim:
+    forall a, b Z:
+        a > 0
+        b > 0
+        =>:
+            gcd(a, b) <= a
+    prove_by_contradiction:
+        gcd(a, b) > a
+        a < gcd(a, b)
+        have k st $divides(gcd(a, b), a)
+        a = k * gcd(a, b)
+        a > 0
+        gcd(a, b) > 0
+        a / gcd(a, b) > 0
+        k = a / gcd(a, b)
+        k > 0
+        k >= 1
+        k * gcd(a, b) >= 1 * gcd(a, b)
+        a >= 1 * gcd(a, b)
+        1 * gcd(a, b) = gcd(a, b)
+        a >= gcd(a, b)
+        not a < gcd(a, b)
+
+# The following's a outline of necessary lemmas
+# Each is provable, waiting to be completed...
+
+claim:
+    forall a Z:
+        a > 0
+        =>:
+            gcd(a, a) = a
+    prove:
+        a != 0
+        $divides(a, a)
+        forall c Z:
+            c > 0
+            $divides(c, a)
+            =>:
+                $divides(c, a)
+
+claim:
+    forall a Z:
+        a > 0
+        =>:
+            gcd(1, a) = 1
+            gcd(a, 1) = 1
+    prove:
+        $divides(1, 1)
+        $divides(1, a)
+
+        forall c Z:
+            c > 0
+            $divides(c, 1)
+            =>:
+                $divides(c, 1)
+
+claim:
+    forall g, a, b Z:
+        g > 0
+        a > 0
+        b > 0
+        $divides(g, a)
+        $divides(g, b)
+        =>:
+            $divides(g, gcd(a, b))
+    prove:
+        $divides(g, gcd(a, b))
+
+claim:
+    forall a, b Z:
+        a > 0
+        b > 0
+        =>:
+            gcd(a, b) = gcd(b, a)
+    prove:
+        $divides(gcd(a, b), b)
+        $divides(gcd(a, b), a)
+        gcd(a, b) > 0
+        $divides(gcd(b, a), a)
+        $divides(gcd(b, a), b)
+        gcd(b, a) > 0
+        $divides(gcd(a, b), gcd(b, a))
+        $divides(gcd(b, a), gcd(a, b))
+
+        gcd(a, b) <= gcd(b, a)
+        gcd(b, a) <= gcd(a, b)
+
+        gcd(a, b) = gcd(b, a)
+
+claim:
+    forall a N, b N, c N:
+        a > 0
+        b > 0
+        c > 0
+        =>:
+            gcd(a, gcd(b, c)) = gcd(gcd(a, b), c)
+    prove:
+        gcd(b, c) > 0
+        gcd(a, b) > 0
+        gcd(a, gcd(b, c)) > 0
+        gcd(gcd(a, b), c) > 0
+
+        $divides(gcd(a, gcd(b, c)), a)
+        $divides(gcd(a, gcd(b, c)), gcd(b, c))
+        $divides(gcd(b, c), b)
+        $divides(gcd(b, c), c)
+        $divides_is_transitive(gcd(a, gcd(b, c)), gcd(b, c), b)
+        $divides_is_transitive(gcd(a, gcd(b, c)), gcd(b, c), c)
+        $divides(gcd(a, gcd(b, c)), b)
+        $divides(gcd(a, gcd(b, c)), c)
+        $divides(gcd(a, gcd(b, c)), gcd(a, b))
+        $divides(gcd(a, gcd(b, c)), gcd(gcd(a, b), c))
+
+        $divides(gcd(gcd(a, b), c), gcd(a, b))
+        $divides(gcd(gcd(a, b), c), c)
+        $divides(gcd(a, b), a)
+        $divides(gcd(a, b), b)
+        $divides_is_transitive(gcd(gcd(a, b), c), gcd(a, b), a)
+        $divides_is_transitive(gcd(gcd(a, b), c), gcd(a, b), b)
+        $divides(gcd(gcd(a, b), c), a)
+        $divides(gcd(gcd(a, b), c), b)
+        $divides(gcd(gcd(a, b), c), gcd(b, c))
+        $divides(gcd(gcd(a, b), c), gcd(a, gcd(b, c)))
+
+        $divides(gcd(a, gcd(b, c)), gcd(gcd(a, b), c))
+        $divides(gcd(gcd(a, b), c), gcd(a, gcd(b, c)))
+
+claim:
+    forall a, b Z:
+        a > 0
+        b > 0
+        $divides(a, b)
+        =>:
+            gcd(a, b) = a
+    prove:
+        a != 0
+        $divides(a, a)
+        forall c Z:
+            c > 0
+            $divides(c, a)
+            =>:
+                $divides(c, a)
+        gcd(a, b) = a
+
+know:    
+    forall a, b, k Z:
+        a > 0
+        b > 0
+        k > 0
+        =>:
+            gcd(a, b) * k = gcd(a * k, b * k)
+
+    forall a, b, k Z:
+        a > 0
+        b > 0
+        k > 0
+        $divides(k, a)
+        $divides(k, b)
+        =>:
+            gcd(a, b) / k = gcd(a / k, b / k)
