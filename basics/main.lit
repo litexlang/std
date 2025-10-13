@@ -24,5 +24,5 @@ fn round(x R) Z:
         =>:
             round(x) = ceil(x)
 
-know forall x R, y Z: or(x - y < 0.5, y - x < 0.5) => round(x) = y
+know forall x R, y Z: x - y < 0.5 or y - x < 0.5 => round(x) = y
 know forall x R, y Z: x - y = 0.5, y >= x => round(x) = y

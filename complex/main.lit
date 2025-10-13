@@ -12,4 +12,4 @@ fn cdiv(a, b C) C:
     dom:
         b != 0
 
-know forall a, b, c, d R: or(c != 0, d != 0) => cdiv(cx(a, b), cx(c, d)) = cx(a*c+b*d, b*c-a*d) / (c^2+d^2)
+know forall a, b, c, d R: c != 0 or d != 0 => cdiv(cx(a, b), cx(c, d)) = cx(a*c+b*d, b*c-a*d) / (c^2+d^2)
